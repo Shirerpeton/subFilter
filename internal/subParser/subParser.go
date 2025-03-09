@@ -117,7 +117,7 @@ func (s *sub) Filter(str string) {
 func (s sub) GetSrtFromSub() string {
 	b := strings.Builder{}
 	for i, d := range s.dialogs {
-		b.WriteString(fmt.Sprintf("%d\n", i))
+		b.WriteString(fmt.Sprintf("%d\n", i + 1))
 		b.WriteString(fmt.Sprintf("%s --> %s\n", getSrtTimestampFromDuration(d.start), getSrtTimestampFromDuration(d.end)))
 		b.WriteString(d.content)
 		if len(s.dialogs) - 1 != i {
