@@ -19,7 +19,7 @@ func getOutputPath(input string) string {
 }
 
 func main() {
-	subPath := flag.String("sub", "", "Path to input subtitle file or directory containing them")
+	subPath := flag.String("sub", "", "Path to input srt file or directory containing them")
 	filter := flag.String("filter", "", "All dialog lines containing this string will be cut out")
 	output := flag.String("out", "", "Path to output subtitle file, defaults to input filename with _filter suffix, for diretory processing must be a directory name as well")
 	flag.Parse()
