@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -32,24 +33,73 @@ func main() {
 		fmt.Println("provide filter value different which is not empty")
 		os.Exit(1)
 	}
-	content, err := os.ReadFile(*subPath)
+	subStat, err := os.Stat(*subPath)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	contentStr := string(content)
-	outputPath := ""
-	if *output != "" {
-		outputPath = *output
+
+	if !subStat.IsDir() {
+		var outputPath string
+		if *output == "" {
+			outputPath = *output
+		} else {
+			outputPath = getOutputPath(*subPath)
+		}
+		content, err := os.ReadFile(*subPath)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		contentStr := string(content)
+		sub, err := subParser.GetSubFromSrt(contentStr)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		sub.Filter(*filter)
+		srt := sub.GetSrtFromSub()
+		os.WriteFile(outputPath, []byte(srt), 0644)
+		fmt.Printf("done - %s\n", outputPath)
 	} else {
-		outputPath = getOutputPath(*subPath)
+		outputFolder := *output
+		if outputFolder == "" {
+			outputFolder = "./output/"
+		}
+		err := os.Mkdir(outputFolder, 0755)
+		if err != nil && !errors.Is(err, os.ErrExist) {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		if !strings.HasSuffix(outputFolder, "/") {
+			outputFolder += "/"
+		}
+		entries, err := os.ReadDir(*subPath)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		for _, entr := range entries {
+			if entr.IsDir() {
+				continue
+			}
+			subPath := *subPath + entr.Name()
+			outputPath := outputFolder + getOutputPath(entr.Name())
+			content, err := os.ReadFile(subPath)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			contentStr := string(content)
+			sub, err := subParser.GetSubFromSrt(contentStr)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			sub.Filter(*filter)
+			srt := sub.GetSrtFromSub()
+			os.WriteFile(outputPath, []byte(srt), 0644)
+			fmt.Printf("done - %s\n", outputPath)
+		}
 	}
-	sub, err := subParser.GetSubFromSrt(contentStr)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	sub.Filter(*filter)
-	srt := sub.GetSrtFromSub()
-	os.WriteFile(outputPath, []byte(srt), 0644)
 }
